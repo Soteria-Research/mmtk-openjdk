@@ -41,7 +41,7 @@
 #include "runtime/os.hpp"
 #include "runtime/safepoint.hpp"
 #include "runtime/thread.hpp"
-#include "runtime/threads.hpp"
+//#include "runtime/threads.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/threadSMR.hpp"
 #include "runtime/vmThread.hpp"
@@ -103,7 +103,7 @@ static void mmtk_spawn_gc_thread(void* tls, int kind, void* ctx) {
   switch (kind) {
     case GC_THREAD_KIND_CONTROLLER: {
       MMTkContextThread* t = new MMTkContextThread(ctx);
-      if (!os::create_thread(t, os::gc_thread)) {
+      if (!os::create_thread(t, os::pgc_thread)) {
         printf("Failed to create thread");
         guarantee(false, "panic");
       }
@@ -113,7 +113,7 @@ static void mmtk_spawn_gc_thread(void* tls, int kind, void* ctx) {
     case GC_THREAD_KIND_WORKER: {
       MMTkHeap::heap()->new_collector_thread();
       MMTkCollectorThread* t = new MMTkCollectorThread(ctx);
-      if (!os::create_thread(t, os::gc_thread)) {
+      if (!os::create_thread(t, os::pgc_thread)) {
         printf("Failed to create thread");
         guarantee(false, "panic");
       }
@@ -199,7 +199,8 @@ static void mmtk_scan_roots_in_mutator_thread(EdgesClosure closure, void* tls) {
   ResourceMark rm;
   JavaThread* thread = (JavaThread*) tls;
   MMTkRootsClosure2 cl(closure);
-  MarkingCodeBlobClosure cb_cl(&cl, false, true);
+//  MarkingCodeBlobClosure cb_cl(&cl, false, true);
+  MarkingCodeBlobClosure cb_cl(&cl, false);
   thread->oops_do(&cl, &cb_cl);
 }
 
@@ -250,16 +251,16 @@ static int static_oop_field_count_offset() {
 }
 
 static size_t compute_klass_mem_layout_checksum() {
-  // printf("C++: Klass %ld, InstanceKlass %ld, InstanceRefKlass %ld, InstanceMirrorKlass %ld, InstanceClassLoaderKlass %ld, TypeArrayKlass %ld, ObjArrayKlass %ld, ArrayKlass %ld\n",
-  //   sizeof(Klass)
-  //   , sizeof(InstanceKlass)
-  //   , sizeof(InstanceRefKlass)
-  //   , sizeof(InstanceMirrorKlass)
-  //   , sizeof(InstanceClassLoaderKlass)
-  //   , sizeof(TypeArrayKlass)
-  //   , sizeof(ObjArrayKlass)
-  //   , sizeof(ArrayKlass)
-  // );
+  printf("C++: Klass %ld, InstanceKlass %ld, InstanceRefKlass %ld, InstanceMirrorKlass %ld, InstanceClassLoaderKlass %ld, TypeArrayKlass %ld, ObjArrayKlass %ld, ArrayKlass %ld\n",
+    sizeof(Klass)
+    , sizeof(InstanceKlass)
+    , sizeof(InstanceRefKlass)
+    , sizeof(InstanceMirrorKlass)
+    , sizeof(InstanceClassLoaderKlass)
+    , sizeof(TypeArrayKlass)
+    , sizeof(ObjArrayKlass)
+    , sizeof(ArrayKlass)
+  );
   return sizeof(Klass)
     ^ sizeof(InstanceKlass)
     ^ sizeof(InstanceRefKlass)

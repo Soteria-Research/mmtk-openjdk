@@ -73,7 +73,8 @@ void MMTkFinalizerThread::initialize() {
     java_lang_Thread::set_thread(thread_oop(), thread);
     java_lang_Thread::set_priority(thread_oop(), NearMaxPriority);
     java_lang_Thread::set_daemon(thread_oop());
-    thread->set_threadOopHandles(thread_oop());
+//    thread->set_threadOopHandles(thread_oop());
+    thread->set_threadObj(thread_oop());
     instance = thread;
 
     Threads::add(thread);
@@ -119,7 +120,8 @@ void MMTkFinalizerThread::finalizer_thread_entry(JavaThread* thread, TRAPS) {
 
 MMTkFinalizerThread::MMTkFinalizerThread(ThreadFunction entry_point) : JavaThread(entry_point) {
   this->is_scheduled = false;
-  this->m = new Monitor(Mutex::suspend_resume, "mmtk-finalizer-monitor", true);
+  // this->m = new Monitor(Mutex::suspend_resume, "mmtk-finalizer-monitor", true);
+  this->m = new Monitor(Mutex::suspend_resume, "mmtk-finalizer-monitor", true, Mutex::_safepoint_check_never);
 }
 
 void MMTkFinalizerThread::schedule() {

@@ -138,7 +138,7 @@ public:
   // Iterate over all objects, calling "cl.do_object" on each.
   void object_iterate(ObjectClosure* cl);
 
-  void pin_object(JavaThread* thread, oop obj);
+  oop pin_object(JavaThread* thread, oop obj);
   void unpin_object(JavaThread* thread, oop obj);
 
   // Similar to object_iterate() except iterates only
@@ -179,7 +179,7 @@ public:
 
   bool print_location(outputStream* st, void* addr) const;
 
-  bool requires_barriers(stackChunkOop obj) const;
+//  bool requires_barriers(stackChunkOop obj) const;
 
   void register_nmethod(nmethod* nm);
   void unregister_nmethod(nmethod* nm);

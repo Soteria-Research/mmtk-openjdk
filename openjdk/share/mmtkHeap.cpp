@@ -52,7 +52,7 @@
 #include "runtime/handles.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/thread.hpp"
-#include "runtime/threads.hpp"
+//#include "runtime/threads.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/management.hpp"
 #include "services/memoryManager.hpp"
@@ -133,7 +133,8 @@ jint MMTkHeap::initialize() {
   BarrierSet::set_barrier_set(barrier_set);
 
   _companion_thread = new MMTkVMCompanionThread();
-  if (!os::create_thread(_companion_thread, os::gc_thread)) {
+//  if (!os::create_thread(_companion_thread, os::gc_thread)) {
+  if (!os::create_thread(_companion_thread, os::pgc_thread)) {
     fprintf(stderr, "Failed to create thread");
     guarantee(false, "panic");
   }
@@ -342,7 +343,7 @@ void MMTkHeap::initialize_serviceability() {//OK
 
   _mmtk_pool = new MMTkMemoryPool(_start, _end, "MMTk pool", MinHeapSize, false);
 
-  _mmtk_manager = new GCMemoryManager("MMTk GC");
+  _mmtk_manager = new GCMemoryManager("MMTk GC", "end of GC");
   _mmtk_manager->add_pool(_mmtk_pool);
 }
 
@@ -404,7 +405,8 @@ void MMTkHeap::unregister_nmethod(nmethod* nm) {
 void MMTkHeap::verify(VerifyOption option) {}
 
 void MMTkHeap::scan_code_cache_roots(OopClosure& cl) {
-  MarkingCodeBlobClosure cb_cl(&cl, false, true);
+//  MarkingCodeBlobClosure cb_cl(&cl, false, true);
+  MarkingCodeBlobClosure cb_cl(&cl, false);
   CodeCache::blobs_do(&cb_cl);
 }
 void MMTkHeap::scan_class_loader_data_graph_roots(OopClosure& cl) {
@@ -464,14 +466,16 @@ HeapWord* MMTkHeap::mem_allocate_nonmove(size_t size, bool* gc_overhead_limit_wa
   return Thread::current()->third_party_heap_mutator.alloc(size << LogHeapWordSize, AllocatorLos);
 }
 
-bool MMTkHeap::requires_barriers(stackChunkOop obj) const {
-  ShouldNotReachHere();
-  return false;
-}
+//bool MMTkHeap::requires_barriers(stackChunkOop obj) const {
+//  ShouldNotReachHere();
+//  return false;
+//}
 
-void MMTkHeap::pin_object(JavaThread* thread, oop obj) {
+//void MMTkHeap::pin_object(JavaThread* thread, oop obj) {
+oop MMTkHeap::pin_object(JavaThread* thread, oop obj) {
   // TODO use mmtk-core pin_object
   GCLocker::lock_critical(thread);
+  return obj;
 }
 
 void MMTkHeap::unpin_object(JavaThread* thread, oop obj) {

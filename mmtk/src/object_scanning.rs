@@ -108,7 +108,11 @@ impl OopIterate for InstanceRefKlass {
 
         if Self::should_scan_weak_refs() {
             let reference = ObjectReference::from(oop);
-            match self.instance_klass.reference_type {
+
+            let reference_type = ReferenceType::try_from(self.instance_klass.reference_type)
+                            .unwrap_or_else(|_| panic!("Invalid reference_type value: {}", self.instance_klass.reference_type));
+//            match self.instance_klass.reference_type {
+            match reference_type {
                 ReferenceType::None => {
                     panic!("oop_iterate on InstanceRefKlass with reference_type as None")
                 }
@@ -179,7 +183,7 @@ fn oop_iterate(oop: Oop, closure: &mut impl EdgeVisitor<OpenJDKEdge>) {
             let instance_klass = unsafe { oop.klass.cast::<InstanceRefKlass>() };
             instance_klass.oop_iterate(oop, closure);
         } // _ => oop_iterate_slow(oop, closure, tls),
-        KlassID::InstanceStackChunk => {unreachable!("StackChunkOop not supported!")},
+//        KlassID::InstanceStackChunk => {unreachable!("StackChunkOop not supported!")},
         KlassID::MaxKlassID => {unreachable!("Invalid KlassID")}
     }
 }

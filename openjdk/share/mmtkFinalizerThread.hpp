@@ -45,6 +45,11 @@ public:
   Monitor* m;
   static MMTkFinalizerThread* instance;
   static void initialize();
+
+  // Hide this thread from external view.
+  bool is_hidden_from_external_view() const      { return true; }
+  bool is_service_thread() const                 { return true; }
+
   static void finalizer_thread_entry(JavaThread* thread, TRAPS);
 
   void schedule();

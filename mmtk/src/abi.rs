@@ -15,7 +15,7 @@ pub enum KlassID {
     InstanceRef,
     InstanceMirror,
     InstanceClassLoader,
-    InstanceStackChunk,
+//    InstanceStackChunk,
     TypeArray,
     ObjArray,
     MaxKlassID
@@ -68,6 +68,13 @@ pub struct Klass {
     pub access_flags: i32, // AccessFlags
     #[cfg(feature = "jfr")]
     pub trace_id: u64,     // JFR_ONLY(traceid _trace_id;)
+
+    // TODO gigiblender: Check if biased locking changes are required somewher else.
+    pub last_biased_lock_bulk_revocation_time: i64,
+    pub prototype_header: u64, // markWord,
+    pub biased_lock_revocation_count: i32,
+    pub shared_class_path_index: i16,
+
     pub shared_class_flags: u16,
     pub archived_mirror_index: i32,
     pub padding: i32,
@@ -118,11 +125,20 @@ pub struct InstanceKlass {
     pub nest_host_index: u16,
     pub this_class_index: u16,
     pub static_oop_field_count: u16,
+
+    pub java_fields_count: u16,
+
     pub idnum_allocated_count: u16,
+
+    pub is_marked_dependent: bool,
+
     pub init_state: u8,
-    pub reference_type: ReferenceType,
+//    pub reference_type: ReferenceType,
+    pub reference_type: u8,
+    pub kind: u8,
+
     pub misc_flags: u16,
-    pub init_monitor: OpaquePointer,         // Monitor*
+//    pub init_monitor: OpaquePointer,         // Monitor*
     pub init_thread: OpaquePointer,         // Thread*
     pub oop_map_cache: OpaquePointer,       // OopMapCache*
     pub jni_ids: OpaquePointer,             // JNIid*
@@ -141,15 +157,16 @@ pub struct InstanceKlass {
     #[cfg(debug_assertions)]
     verify_count: i32,
     #[cfg(debug_assertions)]
-    _shared_class_load_count: i32,
+//    _shared_class_load_count: i32,
     pub methods: OpaquePointer,                // Array<Method*>*
     pub default_methods: OpaquePointer,        // Array<Method*>*
     pub local_interfaces: OpaquePointer,       // Array<Klass*>*
     pub transitive_interfaces: OpaquePointer,  // Array<Klass*>*
     pub method_ordering: OpaquePointer,        // Array<int>*
     pub default_vtable_indices: OpaquePointer, // Array<int>*
-    pub fieldinfo_stream: OpaquePointer,       // Array<u1>*
-    pub fields_status: OpaquePointer,          // Array<FieldStatus>*
+//    pub fieldinfo_stream: OpaquePointer,       // Array<u1>*
+//    pub fields_status: OpaquePointer,          // Array<FieldStatus>*
+    pub fields: OpaquePointer,                 // Array<u2>*
 }
 
 #[repr(u8)]
@@ -162,6 +179,22 @@ pub enum ReferenceType {
     Weak,    // Subclass of java/lang/ref/WeakReference
     Final,   // Subclass of java/lang/ref/FinalReference
     Phantom, // Subclass of java/lang/ref/PhantomReference
+}
+
+impl TryFrom<u8> for ReferenceType {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::None),
+            1 => Ok(Self::Other),
+            2 => Ok(Self::Soft),
+            3 => Ok(Self::Weak),
+            4 => Ok(Self::Final),
+            5 => Ok(Self::Phantom),
+            _ => Err(())
+        }
+    }
 }
 
 impl InstanceKlass {
@@ -229,7 +262,8 @@ pub struct ArrayKlass {
     // While in Rust, dimension and padding occupy two separate words
     // By changing dimension to have size zero, the remaining fields will
     // Have the correct offset into the struct
-    dimension: (),
+//    dimension: (),
+    dimension: i32,
     pub higher_dimension: &'static Klass,
     pub lower_dimension: &'static Klass,
 }
