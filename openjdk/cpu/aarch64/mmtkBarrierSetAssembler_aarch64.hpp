@@ -38,9 +38,9 @@ public:
     Register tmp2,                     // temp register
     Label&   slow_case                // continuation point if fast allocation fails
   );
-  virtual void store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type, Address dst, Register val, Register tmp1, Register tmp2, Register tmp3) {
+  virtual void store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type, Address dst, Register val, Register tmp1, Register tmp2) {
     if (type == T_OBJECT || type == T_ARRAY) object_reference_write_pre(masm, decorators, dst, val, tmp1, tmp2);
-    BarrierSetAssembler::store_at(masm, decorators, type, dst, val, tmp1, tmp2, tmp3);
+    BarrierSetAssembler::store_at(masm, decorators, type, dst, val, tmp1, tmp2);
     if (type == T_OBJECT || type == T_ARRAY) object_reference_write_post(masm, decorators, dst, val, tmp1, tmp2);
   }
 
